@@ -1,0 +1,77 @@
+name: Simple CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ] # Triggers the workflow on pushes to the 'main' branch
+  pull_request:
+    branches: [ "main" ] # Triggers the workflow on pull requests targeting 'main'
+
+jobs:
+  # --------------------
+  # 1. BUILD Stage
+  # --------------------
+  build:
+    runs-on: ubuntu-latest # Specifies the runner environment
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4 # Action to clone the repository code
+
+      - name: Set up Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Specify your desired Node version
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Archive Build Artifacts
+        # If your app requires a build step (e.g., 'npm run build'), run it here.
+        # This step saves the necessary files for later deployment.
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-build-artifact
+          path: . # Save the entire directory (or path to your built files)
+
+  # --------------------
+  # 2. TEST Stage
+  # --------------------
+  test:
+    needs: build # This job runs only after the 'build' job successfully completes
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: app-build-artifact
+          path: . # Download the files we built
+
+      - name: Run Tests
+        run: npm test # Replace with your actual test command (e.g., 'pytest', 'mvn test')
+
+  # --------------------
+  # 3. DEPLOY Stage
+  # --------------------
+  deploy:
+    needs: test # This job runs only after the 'test' job successfully completes
+    # Only deploy if the push was to the main branch, not for PRs
+    if: github.ref == 'refs/heads/main' 
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: app-build-artifact
+          path: .
+
+      - name: Deploy to Hosting Service (Example)
+        # In a real pipeline, this uses a specific action for your service (AWS, Azure, Vercel, etc.)
+        run: echo "Starting deployment of the application..."
+
+      - name: Configure Cloud Access (Example)
+        # This is where you would use your repository secrets (like 'AWS_ACCESS_KEY')
+        run: |
+          echo "Using API key: ${{ secrets.MY_API_KEY }}"
+          # Replace this with your actual deployment command (e.g., AWS CLI, SSH, etc.)

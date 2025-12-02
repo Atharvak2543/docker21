@@ -7,8 +7,8 @@ on:
     branches: [ "main" ] 
 
 env:
-  # 💡 Define the directory where your package.json lives 
-  # CHANGE 'app' to your actual subdirectory name if different (e.g., 'src', 'web')
+  # ❗ IMPORTANT: CHANGE 'app' below to the name of the folder 
+  # that contains your package.json file (e.g., 'src', 'web', etc.)
   APP_DIR: app
 
 jobs:
@@ -28,12 +28,12 @@ jobs:
           node-version: '20' 
 
       - name: Install Dependencies
-        # 🟢 FIX APPLIED HERE: Use working-directory to tell npm where package.json is
+        # Tells npm to run inside the correct subdirectory
         run: npm install
         working-directory: ${{ env.APP_DIR }} 
 
       - name: Archive Build Artifacts
-        # The path should point to the directory containing the built app
+        # Saves the built files from the app directory
         uses: actions/upload-artifact@v4
         with:
           name: app-build-artifact
@@ -54,7 +54,7 @@ jobs:
           path: .
           
       - name: Run Tests
-        # Ensure tests are run from the correct directory
+        # Runs tests from the correct working directory
         run: npm test 
         working-directory: ${{ env.APP_DIR }} 
 
@@ -63,6 +63,7 @@ jobs:
   # --------------------
   deploy:
     needs: test
+    # Only runs for pushes to the 'main' branch
     if: github.ref == 'refs/heads/main' 
     runs-on: ubuntu-latest
     
@@ -73,6 +74,10 @@ jobs:
           name: app-build-artifact
           path: .
 
-      - name: Deploy to Hosting Service (Example)
-        run: echo "Starting deployment of the application..."
-        # Add your actual deployment logic here, referencing the correct files in the '${{ env.APP_DIR }}'
+      - name: Configure Cloud Access (Example)
+        # This is where you would use the secrets we discussed
+        env:
+          MY_KEY: ${{ secrets.MY_API_KEY }}
+        run: |
+          echo "Starting deployment of the application..."
+          # Add your actual deployment commands here
